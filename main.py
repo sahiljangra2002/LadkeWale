@@ -134,7 +134,7 @@ def render_design_tab():
                     img = PIL.Image.open(up_file)
                     
                     # 2. Call Gemini using the explicit model path
-                    model = genai.GenerativeModel(model_name="models/gemini-1.5-flash-latest")
+                    model = genai.GenerativeModel("gemini-1.5-flash")
                     
                     prompt = f"""
                     Act as a luxury fashion designer for LadkeWale. 
