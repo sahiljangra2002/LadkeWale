@@ -124,8 +124,7 @@ def render_design_tab():
             ["Raw Silk (Premium)", "Chanderi (Lightweight)", "Banarasi (Classic)", "Chikankari (Hand-worked)"]
         )
 
-    # --- THIS PART WAS CAUSING THE ERROR ---
-    # Everything below must be indented to stay inside the 'render_design_tab' function
+    # All code below must be indented with 4 spaces to stay inside the function
     if st.button("⚜️ GENERATE COUTURE BLUEPRINT ⚜️", use_container_width=True):
         if up_file:
             with st.spinner("Our Master Tailor is analyzing the aesthetic..."):
@@ -134,8 +133,8 @@ def render_design_tab():
                     import PIL.Image
                     img = PIL.Image.open(up_file)
                     
-                    # 2. Call Gemini to analyze the image
-                    model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
+                    # 2. Call Gemini using the explicit model path
+                    model = genai.GenerativeModel(model_name="models/gemini-1.5-flash-latest")
                     
                     prompt = f"""
                     Act as a luxury fashion designer for LadkeWale. 
@@ -160,7 +159,7 @@ def render_design_tab():
             st.warning("Please upload an inspiration image to begin analysis.")
 
     return event, fabric
-
+            
 def render_measurement_tab(event, fabric):
     """UI for recording measurements and the AI chat stylist."""
     st.markdown("### Step 3. The Precision Fit")
