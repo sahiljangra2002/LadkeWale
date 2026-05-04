@@ -13,7 +13,7 @@ st.set_page_config(
     page_icon="⚜️"
 )
 
-# HIDE STREAMLIT BRANDING (Footer, Menu, Header)
+# HIDE STREAMLIT BRANDING (Professional Mobile Look)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -22,26 +22,20 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# SECURITY: Fetch API Key and Configure AI
+# SECURITY: Fetch API Key
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
 
-# --- UPDATED AI CONFIGURATION ---
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    
-    # We use 'gemini-1.5-flash' because it is the most compatible for image analysis
-    MODEL_NAME = "gemini-1.5-flash" 
-    
-    # This extra line forces the code to look for the model correctly
     try:
-        model_check = genai.get_model(f'models/{MODEL_NAME}')
-        print(f"Model found: {model_check.name}")
+        # Dynamic check to prevent 404 errors by finding the correct available model
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        if any("gemini-1.5-flash" in m for m in available_models):
+            MODEL_NAME = "gemini-1.5-flash"
+        else:
+            MODEL_NAME = "gemini-pro"
     except Exception:
-        # If 'gemini-1.5-flash' isn't found, we fallback to the safest standard version
-            MODEL_NAME = "gemini-pro-vision" 
-else:
-    st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
-        MODEL_NAME = "gemini-1.5-flash" # Default fallback
+        MODEL_NAME = "gemini-1.5-flash" 
 else:
     st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
 
@@ -51,16 +45,23 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @st.cache_data(show_spinner=False)
 def load_image_as_base64(filename):
+    """Encodes local images to base64 for CSS background injection."""
     image_path = os.path.join(BASE_DIR, filename)
-    if not os.path.exists(image_path): return ""
+    if not os.path.exists(image_path):
+        return ""
     try:
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode()
-    except Exception: return ""
+    except Exception:
+        return ""
 
 @st.cache_resource(show_spinner=False)
 def get_gspread_client():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    """Authenticates with Google Sheets API and caches the connection."""
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive",
+    ]
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -72,9 +73,10 @@ def get_gspread_client():
 # --- 3. UI COMPONENTS ---
 
 def render_hero_banner():
+    """Renders the top luxury-themed banner."""
     img_data = load_image_as_base64("H.jpg")
     bg_image_url = f', url("data:image/jpeg;base64,{img_data}")' if img_data else ""
-    
+
     st.markdown(f"""
     <style>
         .hero-section {{
@@ -103,6 +105,7 @@ def render_hero_banner():
     """, unsafe_allow_html=True)
 
 def render_design_tab():
+    """UI for selecting event types and uploading inspiration."""
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown("### Step 1. The Aesthetic")
@@ -117,10 +120,12 @@ def render_design_tab():
         if up_file:
             with st.spinner("Our Master Tailor is analyzing the aesthetic..."):
                 try:
+                    # AI Image Analysis
                     img = PIL.Image.open(up_file)
                     model = genai.GenerativeModel(MODEL_NAME)
-                    prompt = f"Act as a luxury fashion designer for LadkeWale. Analyze this image for a {event} using {fabric}. Provide a 'Couture Blueprint' with Color Palette, Embroidery Style, and Silhouette."
+                    prompt = f"Act as a luxury fashion designer for LadkeWale. Analyze this image for a {event} using {fabric}. Provide a 'Couture Blueprint' including: 1. Primary Color Palette, 2. Embroidery Style, 3. Recommended Silhouette."
                     response = model.generate_content([prompt, img])
+                    
                     st.markdown("---")
                     st.markdown("### ⚜️ YOUR CUSTOM COUTURE BLUEPRINT")
                     st.write(response.text)
@@ -131,6 +136,7 @@ def render_design_tab():
     return event, fabric
 
 def render_measurement_tab(event, fabric):
+    """UI for recording measurements and the AI chat stylist."""
     st.markdown("### Step 3. The Precision Fit")
     c_inputs, c_guide = st.columns([1.5, 1])
     with c_inputs:
@@ -139,6 +145,7 @@ def render_measurement_tab(event, fabric):
         shoulder = col1.number_input("SHOULDER (INCHES)", 12.0, 25.0, 18.0, 0.5)
         waist = col2.number_input("WAIST (INCHES)", 24.0, 55.0, 34.0, 0.5)
         length = col2.number_input("LENGTH (INCHES)", 30.0, 60.0, 42.0, 0.5)
+        st.caption("Standard precision: +/- 0.5 inch variance allowed.")
 
     with c_guide:
         st.markdown("#### Master Class: How to Measure")
@@ -147,22 +154,30 @@ def render_measurement_tab(event, fabric):
     st.markdown("---")
     st.markdown("<h3 style='text-align: center; color: #043b2c;'>⚜️ VIRTUAL COUTURE STYLIST</h3>", unsafe_allow_html=True)
 
-    if "messages" not in st.session_state: st.session_state.messages = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
     for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
     if prompt := st.chat_input("Ask about sizing, styling, or color palettes..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
         try:
             model = genai.GenerativeModel(MODEL_NAME)
-            ctx = f"Stylist for LadkeWale. Event: {event}, Fabric: {fabric}. Measurements: Chest {chest}\", Shoulder {shoulder}\"."
-            response = model.generate_content(f"{ctx} | Query: {prompt}")
-            with st.chat_message("assistant"): st.markdown(response.text)
+            ctx = f"Stylist for LadkeWale. Client attending {event} in {fabric}. Measurements: Chest {chest}, Shoulder {shoulder}."
+            response = model.generate_content(f"{ctx} | User Query: {prompt}")
+            with st.chat_message("assistant"):
+                st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
-        except Exception as e: st.error("Stylist is indisposed. Check connection.")
+        except Exception as e:
+            st.error("The stylist is currently indisposed.")
 
 def render_delivery_tab():
+    """Form to submit order details to Google Sheets."""
     st.markdown("<h3 style='text-align:center;'>Global Logistics</h3>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
@@ -176,7 +191,7 @@ def render_delivery_tab():
 
     if st.button("CONFIRM ORDER & LOGISTICS", use_container_width=True):
         if not name or not phone:
-            st.error("Client Name and Contact Number are required.")
+            st.error("Name and Contact are required.")
             return
         with st.spinner("Updating the Private Ledger..."):
             client = get_gspread_client()
@@ -184,9 +199,14 @@ def render_delivery_tab():
                 try:
                     sheet = client.open("LadkeWale_Orders").sheet1
                     sheet.append_row([name, phone, address, str(date), tier, "Yes" if is_gift else "No"])
-                    st.balloons(); st.success("Order Logged. WhatsApp us for confirmation.")
-                except Exception as e: st.error(f"Ledger Access Error: {e}")
-            else: st.warning("Google Sheets not configured.")
+                    st.balloons()
+                    st.success("Order Logged. We will reach out via WhatsApp.")
+                except Exception as e:
+                    st.error(f"Ledger Error: {e}")
+            else:
+                st.warning("Google Sheets connection not configured.")
+
+# --- 4. MAIN APP EXECUTION ---
 
 def main():
     render_hero_banner()
@@ -200,8 +220,8 @@ def main():
     with t_design: event, fabric = render_design_tab()
     with t_measure: render_measurement_tab(event, fabric)
     with t_delivery: render_delivery_tab()
-    
-    st.markdown("<br><hr><p style='text-align:center; color:gray; font-size:10px;'>© 2026 LADKEWALE</p>", unsafe_allow_html=True)
+
+    st.markdown("<br><hr><p style='text-align:center; color:gray; font-size:10px;'>© 2026 LADKEWALE | PRIVATE CONFIDENTIAL</p>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
