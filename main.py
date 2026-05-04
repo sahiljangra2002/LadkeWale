@@ -4,7 +4,14 @@ import base64
 import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 # --- 1. INITIALIZATION & CONFIG ---
 st.set_page_config(
     page_title="LADKEWALE | Haute Couture", 
