@@ -38,7 +38,7 @@ if GEMINI_API_KEY:
         print(f"Model found: {model_check.name}")
     except Exception:
         # If 'gemini-1.5-flash' isn't found, we fallback to the safest standard version
-        MODEL_NAME = "gemini-pro-vision" 
+            MODEL_NAME = "gemini-pro-vision" 
 else:
     st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
         MODEL_NAME = "gemini-1.5-flash" # Default fallback
