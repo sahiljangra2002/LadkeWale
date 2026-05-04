@@ -133,7 +133,7 @@ def render_design_tab():
                     img = PIL.Image.open(up_file)
                     
                     # 2. Call Gemini to analyze the image
-                    model = genai.GenerativeModel("gemini-1.5-flash-latest") 
+                    model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
                     prompt = f"""
                     Act as a luxury fashion designer for LadkeWale. 
                     Analyze this inspiration image for a {event} using {fabric}.
