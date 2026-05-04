@@ -222,7 +222,7 @@ def main():
         st.markdown("### ⚜️ PRIVATE CONCIERGE")
         st.link_button("💬 WHATSAPP STYLIST", "https://wa.me/919310104687")
         st.divider()
-        st.markdown("**Atelier Hours:**\n10:00 AM - 8:00 PM (IST)")
+        st.markdown("**Working Hours:**\n10:00 AM - 8:00 PM (IST)")
 
     t_design, t_measure, t_delivery = st.tabs([
         "✨ DESIGN GENESIS", 
