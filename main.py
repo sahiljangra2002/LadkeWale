@@ -25,20 +25,22 @@ st.markdown("""
 # SECURITY: Fetch API Key and Configure AI
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
 
+# --- UPDATED AI CONFIGURATION ---
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     
-    # DYNAMIC MODEL SELECTION: Prevents "404 Not Found" errors
+    # We use 'gemini-1.5-flash' because it is the most compatible for image analysis
+    MODEL_NAME = "gemini-1.5-flash" 
+    
+    # This extra line forces the code to look for the model correctly
     try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Priority: Flash 1.5 -> Pro -> First available
-        if any("gemini-1.5-flash" in m for m in available_models):
-            MODEL_NAME = "gemini-1.5-flash"
-        elif any("gemini-pro" in m for m in available_models):
-            MODEL_NAME = "gemini-pro"
-        else:
-            MODEL_NAME = available_models[0].replace("models/", "")
+        model_check = genai.get_model(f'models/{MODEL_NAME}')
+        print(f"Model found: {model_check.name}")
     except Exception:
+        # If 'gemini-1.5-flash' isn't found, we fallback to the safest standard version
+        MODEL_NAME = "gemini-pro-vision" 
+else:
+    st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
         MODEL_NAME = "gemini-1.5-flash" # Default fallback
 else:
     st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
