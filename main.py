@@ -13,29 +13,14 @@ st.set_page_config(
     page_icon="⚜️"
 )
 
-# HIDE STREAMLIT BRANDING (Professional Mobile Look)
-st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-    """, unsafe_allow_html=True)
-
 # SECURITY: Fetch API Key
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    try:
-        # Dynamic check to prevent 404 errors by finding the correct available model
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        if any("gemini-1.5-flash" in m for m in available_models):
-            MODEL_NAME = "gemini-1.5-flash"
-        else:
-            MODEL_NAME = "gemini-pro"
-    except Exception:
-        MODEL_NAME = "gemini-1.5-flash" 
+    # FORCING THE STABLE MODEL NAME
+    # This direct string bypasses local library version checks
+    MODEL_NAME = "models/gemini-1.5-flash" 
 else:
     st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
 
