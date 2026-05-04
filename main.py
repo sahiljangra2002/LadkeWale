@@ -18,7 +18,9 @@ GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    MODEL_NAME = "gemini-2.0-flash"   # ✅ FIXED: updated from deprecated models/gemini-1.5-flash
+    # ✅ FIXED: gemini-1.5-flash-8b has higher free tier limits (1000 RPD vs 200 RPD)
+    # Upgrade to gemini-2.0-flash only if you enable billing on Google Cloud
+    MODEL_NAME = "gemini-1.5-flash-8b"
 else:
     st.error("Missing Gemini API Key. Please add it to your secrets.toml.")
     st.stop()
@@ -152,10 +154,10 @@ def render_measurement_tab(event, fabric):
 
     with c_inputs:
         col1, col2 = st.columns(2)
-        chest = col1.number_input("CHEST (INCHES)", 30.0, 60.0, 40.0, 0.5)
+        chest    = col1.number_input("CHEST (INCHES)",    30.0, 60.0, 40.0, 0.5)
         shoulder = col1.number_input("SHOULDER (INCHES)", 12.0, 25.0, 18.0, 0.5)
-        waist = col2.number_input("WAIST (INCHES)", 24.0, 55.0, 34.0, 0.5)
-        length = col2.number_input("LENGTH (INCHES)", 30.0, 60.0, 42.0, 0.5)
+        waist    = col2.number_input("WAIST (INCHES)",    24.0, 55.0, 34.0, 0.5)
+        length   = col2.number_input("LENGTH (INCHES)",   30.0, 60.0, 42.0, 0.5)
         st.caption("Standard precision: +/- 0.5 inch variance allowed.")
 
     with c_guide:
@@ -212,12 +214,12 @@ def render_delivery_tab():
 
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("FULL NAME OF CLIENT")
-        phone = st.text_input("CONTACT NUMBER")
+        name    = st.text_input("FULL NAME OF CLIENT")
+        phone   = st.text_input("CONTACT NUMBER")
         address = st.text_area("SHIPPING ADDRESS")
     with col2:
-        date = st.date_input("TARGET DELIVERY DATE")
-        tier = st.selectbox(
+        date    = st.date_input("TARGET DELIVERY DATE")
+        tier    = st.selectbox(
             "SHIPPING TIER",
             ["Standard (15-20 Days)", "Express (7-10 Days)", "Priority (3-5 Days)"]
         )
