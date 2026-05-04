@@ -121,18 +121,37 @@ def render_design_tab():
         st.markdown("### Step 2. The Fabric")
         fabric = st.radio(
             "CHOOSE YOUR TEXTURE",
-            [
-                "Raw Silk (Premium)",
-                "Chanderi (Lightweight)",
-                "Banarasi (Classic)",
-                "Chikankari (Hand-worked)",
-            ],
+            ["Raw Silk (Premium)", "Chanderi (Lightweight)", "Banarasi (Classic)", "Chikankari (Hand-worked)"]
         )
 
     if st.button("⚜️ GENERATE COUTURE BLUEPRINT ⚜️", use_container_width=True):
         if up_file:
             with st.spinner("Our Master Tailor is analyzing the aesthetic..."):
-                st.success(f"Blueprint logic initialized for {fabric} - {event}!")
+                try:
+                    # 1. Load the image for the AI
+                    import PIL.Image
+                    img = PIL.Image.open(up_file)
+                    
+                    # 2. Call Gemini to analyze the image
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    prompt = f"""
+                    Act as a luxury fashion designer for LadkeWale. 
+                    Analyze this inspiration image for a {event} using {fabric}.
+                    Provide a 'Couture Blueprint' including:
+                    1. Primary Color Palette
+                    2. Embroidery Style (e.g., Zardosi, Threadwork)
+                    3. Recommended Silhouette (e.g., Bandhgala, Kurta)
+                    Keep it elegant and professional.
+                    """
+                    response = model.generate_content([prompt, img])
+                    
+                    # 3. Display the actual Blueprint
+                    st.markdown("---")
+                    st.markdown("### ⚜️ YOUR CUSTOM COUTURE BLUEPRINT")
+                    st.write(response.text)
+                    
+                except Exception as e:
+                    st.error(f"Tailor's Assistant Error: {e}")
         else:
             st.warning("Please upload an inspiration image to begin analysis.")
 
